@@ -1,0 +1,201 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "serviceName": {
+      "type": "string"
+    },
+    "resourceEnvironmentName": {
+      "type": "string"
+    },
+    "virtualNetworkResourceGroup": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "subnetName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "AwsAccessKey": {
+      "type": "string"
+    },
+    "AwsSecretKey": {
+      "type": "securestring"
+    },
+    "AwsBucketName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "resourcePrefix": "[concat('cg-',toLower(parameters('resourceEnvironmentName')),'-' , parameters('serviceName'))]",
+    "appInsightsName": "[concat(variables('resourcePrefix'),'-ai')]",
+    "appServicePlanName": "[concat(variables('resourcePrefix'),'-asp')]",
+    "subnetResourceId": "[if(greater(length(parameters('subnetName')), 0), resourceId(parameters('virtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('subnetName')), json('null'))]",
+    "functionAppName": "[concat(variables('resourcePrefix'),'-fa')]",
+    "storageAccountName": "[concat('cg',toLower(parameters('resourceEnvironmentName')),parameters('serviceName'),'str')]",
+    "storageNetworkAclObject": {
+      "bypass": "Logging, Metrics",
+      "virtualNetworkRules": [
+        {
+          "id": "[variables('subnetResourceId')]",
+          "action": "Allow"
+        }
+      ],
+      "defaultAction": "Deny"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01",
+      "name": "[variables('appInsightsName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[resourceGroup().location]",
+      "kind": "web",
+      "tags": {
+        "[concat('hidden-link:', resourceId('Microsoft.Web/sites', variables('functionAppName')))]": "Resource"
+      },
+      "properties": {
+        "Application_Type": "web"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2016-09-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[variables('appServicePlanName')]"
+      },
+      "sku": {
+        "name": "S1",
+        "tier": "Standard",
+        "size": "S1",
+        "family": "S",
+        "capacity": 1
+      }
+    },
+    {
+      "name": "[variables('functionAppName')]",
+      "type": "Microsoft.Web/sites",
+      "kind": "functionapp",
+      "apiVersion": "2018-11-01",
+      "location": "[resourceGroup().location]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "alwaysOn": false,
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(concat('microsoft.insights/components/', variables('appInsightsName'))).InstrumentationKey]"
+            },
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ';EndpointSuffix=core.windows.net')]"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "dotnet"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~3"
+            },
+            {
+              "name": "AzureStorageSettings:ConnectionString",
+              "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ';EndpointSuffix=core.windows.net')]"
+            },
+            {
+              "name": "AzureStorageSettings:ContainerName",
+              "value": "blobs"
+            },
+            {
+              "name": "AmazonS3Settings:AccessKey",
+              "value": "[parameters('AwsAccessKey')]"
+            },
+            {
+              "name": "AmazonS3Settings:SecretKey",
+              "value": "[parameters('AwsSecretKey')]"
+            },
+            {
+              "name": "AmazonS3Settings:BucketName",
+              "value": "[parameters('AwsBucketName')]"
+            }
+          ],
+          "connectionStrings": [],
+          "ipSecurityRestrictions": []
+        },
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/config",
+      "condition": "[greater(length(parameters('subnetName')), 0)]",
+      "name": "[concat(variables('functionAppName'), '/virtualNetwork')]",
+      "apiVersion": "2018-11-01",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "subnetResourceId": "[variables('subnetResourceId')]",
+        "swiftSupported": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2019-04-01",
+      "name": "[variables('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "tags": {},
+      "properties": {
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        },
+        "supportsHttpsTrafficOnly": true,
+        "networkAcls": "[if(greater(length(parameters('subnetName')), 0), variables('storageNetworkAclObject'), json('null'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "appServicePlanId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "value": "[variables('appServicePlanName')]"
+    },
+    "functionAppName": {
+      "type": "string",
+      "value": "[variables('functionAppName')]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    }
+  }
+}
