@@ -71,7 +71,7 @@ stages:
                     location: 'UK South'
                     templateLocation: 'Linked artifact'
                     csmFile: '$(Pipeline.Workspace)/Publish/azure/template.json'
-                    overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(ResourceEnvironmentName) -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
+                    overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(ResourceEnvironmentName)" -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
                     deploymentMode: 'Incremental'
                 - task: AzureRmWebAppDeployment@4
                   inputs:
