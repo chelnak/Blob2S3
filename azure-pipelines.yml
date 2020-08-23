@@ -80,6 +80,3 @@ stages:
                     appType: 'functionApp'
                     WebAppName: $(FunctionAppName)
                     packageForLinux: '$(Pipeline.Workspace)/Publish/**/*.zip'
-                    enableCustomDeployment: true
-                    DeploymentType: 'webDeploy'
-                    TakeAppOfflineFlag: false
