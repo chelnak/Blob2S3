@@ -6,9 +6,6 @@ trigger:
 
 pr: none
 
-workspace:
-    clean: all
-
 variables:
   buildConfiguration: 'release'
   buildPlatform: 'anycpu'
@@ -16,42 +13,41 @@ variables:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- task: UseGitVersion@5
-  displayName: GitVersion
-  inputs:
-    updateAssemblyInfo: true
+stages:
+  - stage: build
+    jobs:
+      - job: build
+        steps:
+        - task: DotNetCoreCLI@2
+          displayName: Restore
+          inputs:
+            command: restore
+            projects: 'src/**/*.csproj'
+            noCache: true
 
-- task: DotNetCoreCLI@2
-  displayName: Restore
-  inputs:
-    command: restore
-    projects: 'src/**/*.csproj'
-    noCache: true
+        - task: DotNetCoreCLI@2
+          displayName: Build
+          inputs:
+            projects: 'src/**/*.csproj'
+            arguments: '--configuration $(buildConfiguration) --no-restore'
 
-- task: DotNetCoreCLI@2
-  displayName: Build
-  inputs:
-    projects: 'src/**/*.csproj'
-    arguments: '--configuration $(buildConfiguration) --no-restore'
+        - task: DotNetCoreCLI@2
+          displayName: 'Publish Function App'
+          inputs:
+            command: publish
+            publishWebProjects: false
+            projects: 'src/Chelnak.Blob2S3.Functions/Chelnak.Blob2S3.Functions.csproj'
+            arguments: '--configuration $(buildConfiguration) --output $(build.artifactstagingdirectory)/publish --no-restore --no-build'
 
-- task: DotNetCoreCLI@2
-  displayName: 'Publish Function App'
-  inputs:
-    command: publish
-    publishWebProjects: false
-    projects: 'src/Chelnak.Blob2S3.Functions/Chelnak.Blob2S3.Functions.csproj'
-    arguments: '--configuration $(buildConfiguration) --output $(build.artifactstagingdirectory)/publish --no-restore --no-build'
+        - task: CopyFiles@2
+          displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+          inputs:
+            Contents: |
+              azure/**
+            TargetFolder: '$(build.artifactstagingdirectory)/publish'
+            OverWrite: true
 
-- task: CopyFiles@2
-  displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
-  inputs:
-    Contents: |
-      azure/**
-    TargetFolder: '$(build.artifactstagingdirectory)/publish'
-    OverWrite: true
-
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish Artifact'
-  inputs:
-    PathtoPublish: '$(build.artifactstagingdirectory)/publish'
+        - task: PublishBuildArtifacts@1
+          displayName: 'Publish Artifact'
+          inputs:
+            PathtoPublish: '$(build.artifactstagingdirectory)/publish'
