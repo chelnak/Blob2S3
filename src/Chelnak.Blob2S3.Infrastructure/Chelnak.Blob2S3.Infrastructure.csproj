@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.S3" Version="3.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.5.1" />
+    <PackageReference Include="Microsoft.Azure.Functions.Extensions" Version="1.0.0" />
+  </ItemGroup>
+
+    <ItemGroup>
+    <ProjectReference Include="..\Chelnak.Blob2S3.Core\Chelnak.Blob2S3.Core.csproj" />
+  </ItemGroup>
+
+</Project>
