@@ -57,8 +57,6 @@ stages:
     jobs:
       - deployment:
         environment: TEST
-        variables:
-          envLower: ${{ lower(variables['Environment.Name']) }}
         strategy:
           runOnce:
             deploy:
@@ -73,7 +71,7 @@ stages:
                     location: 'UK South'
                     templateLocation: 'Linked artifact'
                     csmFile: '$(Pipeline.Workspace)/Publish/azure/template.json'
-                    overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(envLower)" -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
+                    overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(Environment.Name)" -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
                     deploymentMode: 'Incremental'
                 - task: AzureRmWebAppDeployment@4
                   inputs:
