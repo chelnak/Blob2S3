@@ -47,7 +47,30 @@ stages:
             TargetFolder: '$(build.artifactstagingdirectory)/publish'
             OverWrite: true
 
-        - task: PublishBuildArtifacts@1
-          displayName: 'Publish Artifact'
-          inputs:
-            PathtoPublish: '$(build.artifactstagingdirectory)/publish'
+        - publish: '$(build.artifactstagingdirectory)/publish'
+          artifact: Publish
+
+  - stage: deploy
+    condition: and(succeeded(), eq(variables['build.sourceBranch'], 'refs/heads/master'))
+    dependsOn: build
+    jobs:
+      - deployment:
+        environment: TEST
+        variables:
+          envLower: ${{ lower(Environment.Name) }}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: Publish
+                - task: AzureResourceManagerTemplateDeployment@3
+                  inputs:
+                    deploymentScope: 'Subscription'
+                    azureResourceManagerConnection: 'Visual Studio Enterprise(7db81549-e1e7-467b-9c24-04b81630eeaa)'
+                    subscriptionId: '7db81549-e1e7-467b-9c24-04b81630eeaa'
+                    location: 'UK South'
+                    templateLocation: 'Linked artifact'
+                    csmFile: '$(Pipeline.Workspace)/Publish/azure/template.json'
+                    overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(envLower)" -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
+                    deploymentMode: 'Incremental'
