@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using System.IO;
 using System;
 using Microsoft.Extensions.Logging;
-using Amazon.S3.Model;
 
 namespace Chelnak.Blob2S3.Infrastructure.Repositories
 {
