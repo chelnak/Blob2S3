@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using Chelnak.Blob2S3.Core.IRepositories;
 using Chelnak.Blob2S3.Core.Configuration;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace Chelnak.Blob2S3.Infrastructure.Repositories
@@ -14,7 +13,7 @@ namespace Chelnak.Blob2S3.Infrastructure.Repositories
         private readonly BlobContainerClient _client;
         private readonly AzureStorageSettings _settings;
 
-        public AzureBlobStorageRepository(ILogger<AzureBlobStorageRepository> logger, IOptions<AzureStorageSettings> settings, BlobServiceClient client)
+        public AzureBlobStorageRepository(ILogger<AzureBlobStorageRepository> logger, IOptions<AzureStorageSettings> settings,  BlobServiceClient client)
         {
             _logger = logger;
             _settings = settings.Value;
@@ -27,9 +26,20 @@ namespace Chelnak.Blob2S3.Infrastructure.Repositories
             await _client.CreateIfNotExistsAsync();
 
             var blob = _client.GetBlobClient(blobName);
-            if (! await blob.ExistsAsync())
+
+            try
             {
-                _logger.LogError($"A blob with name {blobName} does not exist in the sources storage account.");
+                await blob.GetPropertiesAsync();
+            }
+            catch (Azure.RequestFailedException e)
+            {
+                if (e.Status == 404)
+                {
+                    _logger.LogError($"A blob named {blobName} does not exist. Processing will not be attempted.");
+                    return null;
+                }
+
+                throw;
             }
             return blob;
         }

@@ -23,17 +23,21 @@ namespace Chelnak.Blob2S3.Core.Services
         public async Task TransferFile(string name)
         {
 
-            if (! await _amazonS3Repository.ValidateBucket()){
+            if (!await _amazonS3Repository.ValidateBucket())
+            {
                 throw new Exception("Bucket validation failed. Could not find bucket.");
             }
 
             var blob = await _blobStorageRepository.GetBlobClient(name);
 
-            using (var mem = new MemoryStream())
+            if (blob != null)
             {
-                using (await blob.DownloadToAsync(mem))
+                using (var mem = new MemoryStream())
                 {
-                    await _amazonS3Repository.StreamFileAsync(mem, name);
+                    using (await blob.DownloadToAsync(mem))
+                    {
+                        await _amazonS3Repository.StreamFileAsync(mem, name);
+                    }
                 }
             }
         }
