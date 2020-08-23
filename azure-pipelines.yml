@@ -14,7 +14,7 @@ variables:
   buildPlatform: 'anycpu'
 
 pool:
-  name: 'ubuntu-latest'
+  vmImage: 'ubuntu-latest'
 
 steps:
 - task: UseGitVersion@5
