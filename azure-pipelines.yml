@@ -58,7 +58,7 @@ stages:
       - deployment:
         environment: TEST
         variables:
-          envLower: ${{ lower(Environment.Name) }}
+          envLower: ${{ lower(variables['Environment.Name']) }}
         strategy:
           runOnce:
             deploy:
