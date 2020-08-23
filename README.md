@@ -29,3 +29,12 @@ POST http://localhost:7071/api/Transfer
     "blob2.jpg"
 ]
 ```
+
+# TODO
+
+* Unit tests
+* Improve error handling
+* Improve status monitoring
+* Investigate aborting failed multipart bucket uploads (aws)
+* Don't hardcode region in startup config (aws)
+* Use managed identity for blob storage (azure)
