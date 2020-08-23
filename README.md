@@ -3,6 +3,7 @@
 A durable function for transfering multiple files from an Azure Storage account to Amazon S3.
 
 ## local.settings.json
+
 ``` json
 {
   "IsEncrypted": false,
@@ -17,4 +18,14 @@ A durable function for transfering multiple files from an Azure Storage account 
     "AmazonS3Settings:BucketName": ""
   }
 }
+```
+
+## Running
+
+```
+POST http://localhost:7071/api/Transfer
+[
+    "blob1.txt",
+    "blob2.jpg"
+]
 ```
