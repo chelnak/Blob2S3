@@ -78,7 +78,7 @@ stages:
                     ConnectionType: 'AzureRM'
                     azureSubscription: 'Visual Studio Enterprise(7db81549-e1e7-467b-9c24-04b81630eeaa)'
                     appType: 'functionApp'
-                    WebAppName: 'cg-test-blob-fa'
+                    WebAppName: $(FunctionAppName)
                     packageForLinux: '$(Pipeline.Workspace)/Publish/**/*.zip'
                     enableCustomDeployment: true
                     DeploymentType: 'webDeploy'
