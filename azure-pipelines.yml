@@ -36,6 +36,7 @@ stages:
           inputs:
             command: publish
             publishWebProjects: false
+            zipAfterPublish: true
             projects: 'src/Chelnak.Blob2S3.Functions/Chelnak.Blob2S3.Functions.csproj'
             arguments: '--configuration $(buildConfiguration) --output $(build.artifactstagingdirectory)/publish --no-restore --no-build'
 
@@ -74,3 +75,13 @@ stages:
                     csmFile: '$(Pipeline.Workspace)/Publish/azure/template.json'
                     overrideParameters: '-serviceName "$(ServiceName) -resourceEnvironmentName "$(envLower)" -AwsAccessKey "$(AwsAccessKey)" -AwsSecretKey "$(AwsSecretKey)" -AwsBucketName "$(AwsBucketName)"'
                     deploymentMode: 'Incremental'
+                - task: AzureRmWebAppDeployment@4
+                  inputs:
+                    ConnectionType: 'AzureRM'
+                    azureSubscription: 'Visual Studio Enterprise(7db81549-e1e7-467b-9c24-04b81630eeaa)'
+                    appType: 'functionApp'
+                    WebAppName: 'cg-test-blob-fa'
+                    packageForLinux: '$(Pipeline.Workspace)/Publish/**/*.zip'
+                    enableCustomDeployment: true
+                    DeploymentType: 'webDeploy'
+                    TakeAppOfflineFlag: false
