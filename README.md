@@ -38,3 +38,4 @@ POST http://localhost:7071/api/Transfer
 * Investigate aborting failed multipart bucket uploads (aws)
 * Don't hardcode region in startup config (aws)
 * Use managed identity for blob storage (azure)
+* Use keyvault for AWS keys
