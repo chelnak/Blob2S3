@@ -7,19 +7,26 @@ using Microsoft.Extensions.Logging;
 
 namespace Chelnak.Blob2S3.Functions
 {
-    public static class StartTransfer
+    public class StartTransfer
     {
+
+        private readonly ILogger<StartTransfer> _logger;
+
+        public StartTransfer(ILogger<StartTransfer> logger)
+        {
+            _logger = logger;
+        }
+
         [FunctionName("Transfer")]
-        public static async Task<HttpResponseMessage> Start(
+        public async Task<HttpResponseMessage> Start(
             [HttpTrigger(AuthorizationLevel.Admin, "post")] HttpRequestMessage req,
-            [DurableClient] IDurableOrchestrationClient starter,
-            ILogger logger)
+            [DurableClient] IDurableOrchestrationClient starter)
         {
             // <object> should be a model
             var eventData = await req.Content.ReadAsAsync<object>();
             string instanceId = await starter.StartNewAsync("Orchestrator", eventData);
 
-            logger.LogInformation($"Started orchestration with ID = '{instanceId}'.");
+            _logger.LogInformation($"Started orchestration with ID = '{instanceId}'.");
 
             return starter.CreateCheckStatusResponse(req, instanceId);
         }

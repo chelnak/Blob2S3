@@ -6,27 +6,33 @@ using Microsoft.Extensions.Logging;
 
 namespace Chelnak.Blob2S3.Functions
 {
-    public static class Orchestrator
+    public class Orchestrator
     {
 
+        private readonly ILogger<Orchestrator> _logger;
+
+        public Orchestrator(ILogger<Orchestrator> logger)
+        {
+            _logger = logger;
+        }
+
         [FunctionName("Orchestrator")]
-        public static async Task RunOrchestrator(
-            [OrchestrationTrigger] IDurableOrchestrationContext context, ILogger logger)
+        public async Task RunOrchestrator(
+            [OrchestrationTrigger] IDurableOrchestrationContext context)
         {
             var input = context.GetInput<string[]>();
-            var tasks = new Task<string>[input.Length];
+            var tasks = new Task<bool>[input.Length];
 
-            logger.LogInformation($"Starting process ({context.InstanceId}) for {input.Length} files.");
+            _logger.LogInformation($"Starting process ({context.InstanceId}) for {input.Length} files.");
 
             for (int i = 0; i < input.Length; i++)
             {
-                tasks[i] = context.CallActivityAsync<string>(
+                tasks[i] = context.CallActivityAsync<bool>(
                     "FileProcessor",
                     input[i]);
             }
             await Task.WhenAll(tasks);
-
-            logger.LogInformation($"Process complete ({context.InstanceId}).");
+            _logger.LogInformation($"Process complete ({context.InstanceId}).");
         }
     }
 }

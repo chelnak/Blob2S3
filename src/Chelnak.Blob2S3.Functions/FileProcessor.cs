@@ -8,17 +8,20 @@ namespace Chelnak.Blob2S3.Functions
 {
     public class FileProcessor
     {
+        private readonly ILogger<FileProcessor> _logger;
         private readonly IFileTransferService _transferService;
 
-        public FileProcessor(IFileTransferService transferService)
+        public FileProcessor(ILogger<FileProcessor> logger, IFileTransferService transferService)
         {
+            _logger = logger;
             _transferService = transferService;
         }
 
         [FunctionName("FileProcessor")]
-        public async Task ProcessFile([ActivityTrigger] string fileName, ILogger log)
+        public async Task<bool> ProcessFile([ActivityTrigger] string fileName)
         {
             await _transferService.TransferFile(fileName);
+            return true;
         }
     }
 }
