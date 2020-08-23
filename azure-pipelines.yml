@@ -65,9 +65,9 @@ stages:
                   artifact: Publish
                 - task: AzureResourceManagerTemplateDeployment@3
                   inputs:
-                    deploymentScope: 'Subscription'
+                    deploymentScope: 'Resource Group'
+                    resourceGroupName: $(ResourceGroupName)
                     azureResourceManagerConnection: 'Visual Studio Enterprise(7db81549-e1e7-467b-9c24-04b81630eeaa)'
-                    subscriptionId: '7db81549-e1e7-467b-9c24-04b81630eeaa'
                     location: 'UK South'
                     templateLocation: 'Linked artifact'
                     csmFile: '$(Pipeline.Workspace)/Publish/azure/template.json'
